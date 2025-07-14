@@ -1,5 +1,6 @@
-# vpn-gateway
-A docker client for the IPv64.net VPN gateway.
+# IPv64.net VPN Gateway Docker Client
+A lightweight docker client for the IPv64.net VPN gateway.
+The client should be lightweight and work on all common devices.
 
 
 docker build -t ipv64-vpn-gateway-client .
