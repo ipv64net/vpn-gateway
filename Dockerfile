@@ -1,7 +1,5 @@
 FROM alpine:3.22
 
-ENV WG_TOKEN=""
-
 # install dependencies
 RUN apk add --no-cache \
     wireguard-tools \
@@ -13,8 +11,7 @@ RUN apk add --no-cache \
     iptables \
     procps
 
-WORKDIR /opt/app
-
 COPY assets/entrypoint.sh /opt/app/entrypoint.sh
 
+WORKDIR /opt/app
 ENTRYPOINT ["/opt/app/entrypoint.sh"]
