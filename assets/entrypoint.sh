@@ -45,5 +45,5 @@ while true; do
   TS=$(date +"%Y-%m-%d %H:%M:%S.%N %Z")
   RESPONSE=$(curl -fsL "${WG_STATS_URL}" | head -n 1)
   echo "[INFO] ${TS} | ${RESPONSE}"
-  sleep 30
+  sleep 300
 done
