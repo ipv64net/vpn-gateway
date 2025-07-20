@@ -2,19 +2,48 @@
 
 set -e
 
-if [ -z "$WG_TOKEN" ]; then
-    echo "[ERROR] Missing WG_TOKEN"
-    exit 1
+SERVICE_BASE_URL="https://ipv64.net/"
+WG_CONFIG_URL="${SERVICE_BASE_URL}?wgconfig=${WG_TOKEN}"
+WG_STATS_URL="${SERVICE_BASE_URL}?wgstats=${WG_TOKEN}"
+
+##
+
+if [ -z "${WG_TOKEN}" ]; then
+  TS=$(date +"%Y-%m-%d %H:%M:%S.%N %Z")
+  echo "[ERROR] ${TS} | Missing WG_TOKEN"
+  exit 1
 fi
 
-WG_URL="https://ipv64.net?wgconfig=${WG_TOKEN}"
-
-echo "[INFO] Downloading WireGuard configuration from: $WG_URL"
+# create & enter working directory
 mkdir -p /etc/wireguard
-curl -fsSL "$WG_URL" -o /etc/wireguard/wg0.conf
+if ! cd /etc/wireguard; then
+  TS=$(date +"%Y-%m-%d %H:%M:%S.%N %Z")
+  echo "[ERROR] ${TS} | Could not create working directory"
+  exit 1
+fi
 
-echo "[INFO] Starting WireGuard interface wg0"
-wg-quick up wg0
+# download up to date configuration
+TS=$(date +"%Y-%m-%d %H:%M:%S.%N %Z")
+echo "[INFO] ${TS} | Downloading WireGuard configuration"
+if ! curl -fsL "${WG_CONFIG_URL}" -o ./wg0.conf; then
+  TS=$(date +"%Y-%m-%d %H:%M:%S.%N %Z")
+  echo "[ERROR] ${TS} | Could not download new configuration"
+  exit 1
+fi
 
-# Halte den Container am Leben
-tail -f /dev/null
+# connect wireguard tunnel
+TS=$(date +"%Y-%m-%d %H:%M:%S.%N %Z")
+echo "[INFO] ${TS} | Starting WireGuard interface wg0"
+if ! wg-quick up wg0; then
+  TS=$(date +"%Y-%m-%d %H:%M:%S.%N %Z")
+  echo "[ERROR] ${TS} | Could not start WireGuard interface"
+  exit 1
+fi
+
+# keep container running
+while true; do
+  TS=$(date +"%Y-%m-%d %H:%M:%S.%N %Z")
+  RESPONSE=$(curl -fsL "${WG_STATS_URL}" | head -n 1)
+  echo "[INFO] ${TS} | ${RESPONSE}"
+  sleep 300
+done
