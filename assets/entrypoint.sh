@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 
 set -e
 
@@ -8,11 +8,26 @@ WG_STATS_URL="${SERVICE_BASE_URL}?wgstats=${WG_TOKEN}"
 
 ##
 
-if [ -z "${WG_TOKEN}" ]; then
+ACTION="${1}"
+
+if [ "${ACTION}" == "configure" ]; then
+  # configuration mode
+  read -s -p "Token: " WG_TOKEN
+  echo "${WG_TOKEN}"
+elif [ "${ACTION}" == "run" ]; then
+  # daemonize
+  if [ -z "${WG_TOKEN}" ]; then
+    TS=$(date +"%Y-%m-%d %H:%M:%S.%N %Z")
+    echo "[ERROR] ${TS} | Missing WG_TOKEN"
+    exit 1
+  fi
+else
   TS=$(date +"%Y-%m-%d %H:%M:%S.%N %Z")
-  echo "[ERROR] ${TS} | Missing WG_TOKEN"
+  echo "[ERROR] ${TS} | Missing or invalid ACTION. 'configure' or 'run'"
   exit 1
 fi
+
+##
 
 # create & enter working directory
 mkdir -p /etc/wireguard
@@ -40,10 +55,12 @@ if ! wg-quick up wg0; then
   exit 1
 fi
 
-# keep container running
-while true; do
-  TS=$(date +"%Y-%m-%d %H:%M:%S.%N %Z")
-  RESPONSE=$(curl -fsL "${WG_STATS_URL}" | head -n 1)
-  echo "[INFO] ${TS} | ${RESPONSE}"
-  sleep 300
-done
+if [ "${ACTION}" == "run" ]; then
+  # keep container running
+  while true; do
+    TS=$(date +"%Y-%m-%d %H:%M:%S.%N %Z")
+    RESPONSE=$(curl -fsL "${WG_STATS_URL}" | head -n 1)
+    echo "[INFO] ${TS} | ${RESPONSE}"
+    sleep 300
+  done
+fi
